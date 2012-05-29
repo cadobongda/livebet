@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <target name="deploy">
+    <delete file="${deploy.dir}${webapp.name}.war"/>
+    <delete dir="${deploy.dir}${webapp.name}"/>
+
+    <echo message="Copy file ${maven.project.build.directory}/${webapp.name}.war to ${deploy.dir}"/>
+    <copy file="${maven.project.build.directory}/${webapp.name}.war" todir="${deploy.dir}"/>
+  </target>
+</project>

@@ -18,16 +18,25 @@
  */
 package com.cadobongda.livebet.servlet;
 
+import com.cadobongda.livenews.messaging.JMSProvider;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.RootContainer;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.TopicSubscriber;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -37,7 +46,13 @@ import javax.servlet.http.HttpServletResponse;
  * @author <a href="hoang281283@gmail.com">Minh Hoang TO</a>
  * @date 5/18/12
  */
-@WebServlet(name = "livescore", asyncSupported = true)
+@WebServlet(name = "livescore", asyncSupported = true,
+   initParams = {
+      @WebInitParam(name = "topic", value = "/topic/liveScoreTopic"),
+      @WebInitParam(name = "portalContainer", value = "portal")
+   },
+   urlPatterns = {"/livescore"}
+)
 public class LivescoreServlet extends HttpServlet implements MessageListener
 {
 
@@ -45,10 +60,23 @@ public class LivescoreServlet extends HttpServlet implements MessageListener
 
    private volatile boolean processingPush = false;
 
+   private TopicSubscriber topicSubscriber;
+
    @Override
    public void init(ServletConfig config) throws ServletException
    {
       super.init(config);
+
+      String topicName = config.getInitParameter("topic");
+      String portalContainer = config.getInitParameter("portalContainer");
+      try
+      {
+         initTopicSubscriber(topicName, portalContainer);
+      }
+      catch (JMSException jmsEx)
+      {
+         jmsEx.printStackTrace();
+      }
    }
 
    @Override
@@ -96,5 +124,19 @@ public class LivescoreServlet extends HttpServlet implements MessageListener
       {
          processingPush = false;
       }
+   }
+
+   private void initTopicSubscriber(String topicName, String portalContainer) throws JMSException
+   {
+      PortalContainer pContainer = RootContainer.getInstance().getPortalContainer(portalContainer);
+      JMSProvider jmsProvider = (JMSProvider)pContainer.getComponentInstanceOfType(JMSProvider.class);
+
+      Connection connection = jmsProvider.createConnection();
+      Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+      Topic topic = jmsProvider.getTopic(topicName);
+      topicSubscriber = session.createDurableSubscriber(topic, "LivescoreServlet");
+      topicSubscriber.setMessageListener(this);
+      connection.start();
    }
 }

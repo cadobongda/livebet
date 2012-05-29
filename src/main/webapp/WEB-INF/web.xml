@@ -8,9 +8,4 @@
 
   <display-name>soccer-livebet</display-name>
 
-  <servlet-mapping>
-    <servlet-name>livescore</servlet-name>
-    <url-pattern>/livescore</url-pattern>
-  </servlet-mapping>
-
 </web-app>

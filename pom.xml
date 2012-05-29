@@ -4,11 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-
   <groupId>com.cadobongda.livebet</groupId>
   <artifactId>soccer-livebet</artifactId>
   <packaging>war</packaging>
   <version>1.0</version>
+
+  <properties>
+    <gatein.version>3.3.0-CR01-cadobongda</gatein.version>
+    <spring.version>3.1.1.RELEASE</spring.version>
+    <exo.kernel.version>2.3.6-GA</exo.kernel.version>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -23,9 +28,53 @@
       <version>1.1</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc-portlet</artifactId>
+      <version>${spring.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.kernel</groupId>
+      <artifactId>exo.kernel.container</artifactId>
+      <version>${exo.kernel.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.portal</groupId>
+      <artifactId>exo.portal.component.betmodules.messaging</artifactId>
+      <version>${gatein.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
+      <!--
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-gatein-deploy-dir</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <requireFilesExist>
+                    <files>
+                      <file>${gatein-webapps-dir}</file>
+                    </files>
+                  </requireFilesExist>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -33,6 +82,33 @@
           <source>1.6</source>
           <target>1.6</target>
         </configuration>
+      </plugin>
+
+      <!-- Antrun plugin to deploy the webapp -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <id>deploy-livebet-to-GateIn</id>
+            <phase>install</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <ant antfile="${project.basedir}/deploy.xml" inheritRefs="true">
+                  <target name="deploy"/>
+                  <property name="maven.project.basedir" value="${project.basedir}"/>
+                  <property name="maven.project.build.directory" value="${project.build.directory}"/>
+                  <property name="webapp.name" value="${project.build.finalName}" />
+                  <property name="deploy.dir" value="${gatein.webapps.dir}"/>
+                </ant>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <finalName>soccer-livebet</finalName>
